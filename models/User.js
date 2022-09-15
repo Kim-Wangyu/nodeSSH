@@ -1,5 +1,8 @@
 const mongoose = require('mongoose')
 
+const bcrypt = require('bcrypt');
+const saltRounds = 10
+
 
 const userSchema = mongoose.Schema({
     name:{
@@ -32,6 +35,27 @@ const userSchema = mongoose.Schema({
         type: Number
     }
 
+})
+//user.save를 하기 전에 뭔가를 하고 user.save를 실행
+userSchema.pre('save', function(next){
+
+    var user = this; //이거를 써야 밑에서 password를 가져올 수 있음. this는 위 데이터를 말함
+
+
+    if(user.isModified('password')){
+            //비밀번호를 암호화 시킨다.
+        bcrypt.genSalt(saltRounds, function(err, salt) {
+            if(err) return next(err)
+
+
+            bcrypt.hash(user.password, salt, function(err, hash) {
+            // Store hash in your password DB.
+                if(err) return next(err)
+                user.password = hash // 플래인 패스워드를 해쉬된 비밀번호로 교체를 해주는 것
+                next()
+            });
+        });
+    }
 
 })
 
